@@ -3,188 +3,245 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mobile QR Generator</title>
+    <title>Saheli Label Creator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
-        :root {
-            --primary: #6366f1;
-            --bg: #f8fafc;
-            --text: #1e293b;
+        :root { 
+            --brand: #db2777; 
+            --brand-dark: #9d174d;
+            --bg: #fff1f2; 
+            --card: #ffffff; 
+            --success: #10b981;
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        body { 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
             min-height: 100vh;
         }
 
-        .container {
-            width: 90%;
-            max-width: 400px;
-            background: white;
-            padding: 24px;
-            border-radius: 20px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        }
-
-        h2 {
-            margin-top: 0;
-            font-size: 1.5rem;
+        /* Container & Card */
+        .app-card { 
+            width: 100%; 
+            max-width: 400px; 
+            background: var(--card); 
+            padding: 24px; 
+            border-radius: 24px; 
+            box-shadow: 0 10px 25px rgba(219, 39, 119, 0.1); 
+            box-sizing: border-box; 
             text-align: center;
-            color: var(--primary);
         }
 
-        .input-group {
-            margin-bottom: 16px;
+        .brand-header { margin-bottom: 20px; }
+        .brand-header h1 { margin: 0; color: var(--brand); font-size: 1.8rem; letter-spacing: 2px; text-transform: uppercase; }
+        .brand-header p { margin: 0; font-size: 0.8rem; color: var(--brand-dark); opacity: 0.7; }
+
+        /* Form Styling */
+        .input-group { margin-bottom: 12px; text-align: left; }
+        label { display: block; font-size: 0.7rem; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid #fce7f3; 
+            border-radius: 12px; 
+            font-size: 16px; 
+            outline: none; 
+            box-sizing: border-box; 
+            transition: 0.2s; 
+        }
+        input:focus { border-color: var(--brand); background: #fffbff; }
+
+        /* Buttons */
+        button { 
+            width: 100%; 
+            padding: 16px; 
+            border-radius: 14px; 
+            border: none; 
+            font-weight: 700; 
+            font-size: 1rem; 
+            cursor: pointer; 
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            margin-top: 10px; 
+        }
+        .btn-main { background: var(--brand); color: white; box-shadow: 0 4px 12px rgba(219, 39, 119, 0.2); }
+        .btn-main:active { transform: scale(0.95); }
+        
+        .btn-refresh { 
+            background: var(--success); 
+            color: white; 
+            display: none; 
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
         }
 
-        label {
-            display: block;
-            font-size: 0.875rem;
-            font-weight: 600;
-            margin-bottom: 6px;
-            color: #64748b;
+        /* Preview Area */
+        #preview-area { 
+            margin-top: 20px; 
+            display: none; 
+            border-top: 2px dashed #fce7f3; 
+            padding-top: 20px; 
+            animation: fadeIn 0.5s ease-in;
+        }
+        #qrcode { display: inline-block; padding: 10px; background: white; border: 1px solid #fce7f3; border-radius: 10px; margin-bottom: 10px; }
+        .success-badge { color: var(--success); font-weight: bold; font-size: 0.9rem; margin-bottom: 10px; display: block; }
+
+        /* History */
+        .history { width: 100%; max-width: 400px; margin-top: 20px; }
+        .history-item { 
+            background: white; 
+            padding: 12px; 
+            border-radius: 12px; 
+            margin-bottom: 8px; 
+            font-size: 0.8rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-left: 4px solid var(--brand);
+            animation: slideIn 0.3s ease-out;
         }
 
-        input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 16px; /* Prevents iOS zoom on focus */
-            outline: none;
-            transition: border-color 0.2s;
-            box-sizing: border-box;
-        }
-
-        input:focus {
-            border-color: var(--primary);
-        }
-
-        button {
-            width: 100%;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            margin-top: 10px;
-            box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.4);
-            transition: transform 0.1s;
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
-
-        #qr-hidden {
-            display: none;
-        }
-
-        .footer {
-            text-align: center;
-            font-size: 0.75rem;
-            color: #94a3b8;
-            margin-top: 20px;
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateX(-10px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>QR PDF Creator</h2>
+<div class="app-card">
+    <div class="brand-header">
+        <h1>SAHELI</h1>
+        <p>Boutique Inventory Manager</p>
+    </div>
     
-    <div class="input-group">
-        <label>Product Name</label>
-        <input type="text" id="name" placeholder="Enter name...">
+    <div id="form-content">
+        <div class="input-group">
+            <label>Product Name</label>
+            <input type="text" id="name" placeholder="e.g. Chanderi Saree">
+        </div>
+        <div class="input-group">
+            <label>Model/Style Code</label>
+            <input type="text" id="model" placeholder="e.g. SH-2026">
+        </div>
+        <div class="input-group">
+            <label>Color</label>
+            <input type="text" id="color" placeholder="e.g. Emerald Green">
+        </div>
+        <div class="input-group">
+            <label>Price (₹)</label>
+            <input type="number" id="price" placeholder="0.00">
+        </div>
+        
+        <button class="btn-main" onclick="generateLabel()">Generate & Print PDF</button>
     </div>
 
-    <div class="input-group">
-        <label>Model Number</label>
-        <input type="text" id="model" placeholder="Enter model...">
+    <div id="preview-area">
+        <div id="qrcode"></div>
+        <span class="success-badge">✓ PDF Label Saved!</span>
+        <button class="btn-refresh" id="refresh-btn" onclick="restart()">+ Create New Item</button>
     </div>
-
-    <div class="input-group">
-        <label>Price</label>
-        <input type="number" id="price" placeholder="0.00" step="0.01">
-    </div>
-
-    <button onclick="createPDF()">Generate & Download PDF</button>
-
-    <div class="footer">Generates a high-quality 4x4 inch PDF label</div>
 </div>
 
-<div id="qr-hidden"></div>
+<div class="history" id="history-list"></div>
 
 <script>
-    function createPDF() {
-        const { jsPDF } = window.jspdf;
+    let history = JSON.parse(localStorage.getItem('saheli_history') || '[]');
+
+    function updateHistoryUI() {
+        const container = document.getElementById('history-list');
+        container.innerHTML = history.length ? '<label style="display:block; margin-bottom:10px; text-align:center;">Recent Labels</label>' : '';
+        history.slice().reverse().forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.innerHTML = `<span><b>${item.name}</b> (${item.color})</span> <span>₹${item.price}</span>`;
+            container.appendChild(div);
+        });
+    }
+
+    async function generateLabel() {
         const name = document.getElementById('name').value;
         const model = document.getElementById('model').value;
+        const color = document.getElementById('color').value;
         const price = document.getElementById('price').value;
 
-        if (!name || !model || !price) {
-            alert("Please fill out all fields!");
+        if (!name || !model || !color || !price) {
+            alert("Please complete all fields!");
             return;
         }
 
-        // Clean previous QR
-        const qrBox = document.getElementById("qr-hidden");
-        qrBox.innerHTML = "";
-
-        // Combine data for QR
-        const combinedData = `NAME: ${name}\nMODEL: ${model}\nPRICE: $${price}`;
-
-        // Create QR Code
-        new QRCode(qrBox, {
-            text: combinedData,
-            width: 256,
-            height: 256,
-            correctLevel: QRCode.CorrectLevel.H
+        // Generate QR
+        const qrContainer = document.getElementById("qrcode");
+        qrContainer.innerHTML = "";
+        const qrData = `SAHELI BOUTIQUE\nItem: ${name}\nCode: ${model}\nColor: ${color}\nPrice: ₹${price}`;
+        
+        new QRCode(qrContainer, {
+            text: qrData,
+            width: 180,
+            height: 180,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
         });
 
-        // Small delay to ensure QR is rendered in DOM
+        // Save to History
+        history.push({ name, model, color, price });
+        if (history.length > 5) history.shift();
+        localStorage.setItem('saheli_history', JSON.stringify(history));
+        updateHistoryUI();
+
+        // Generate PDF
         setTimeout(() => {
-            const canvas = qrBox.querySelector('canvas');
-            const qrImage = canvas.toDataURL("image/png");
-
-            // Create PDF (100mm x 100mm Square Label)
-            const doc = new jsPDF({
-                unit: "mm",
-                format: [100, 100]
-            });
-
-            // Design the PDF
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(16);
-            doc.text("PRODUCT LABEL", 50, 15, { align: "center" });
+            const { jsPDF } = window.jspdf;
+            const canvas = qrContainer.querySelector('canvas');
+            const doc = new jsPDF({ unit: "mm", format: [80, 80] });
             
-            // Add QR Code
-            doc.addImage(qrImage, 'PNG', 20, 20, 60, 60);
-
-            // Add Details
-            doc.setFontSize(12);
+            // Header
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(18);
+            doc.setTextColor(219, 39, 119); // Saheli Pink
+            doc.text("SAHELI", 40, 12, { align: "center" });
+            
+            // QR Image
+            doc.addImage(canvas.toDataURL("image/png"), 'PNG', 15, 18, 50, 50);
+            
+            // Product Info
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(11);
+            doc.text(`${name}`, 40, 72, { align: "center" });
+            
+            doc.setFontSize(9);
             doc.setFont("helvetica", "normal");
-            doc.text(`Name: ${name}`, 10, 85);
-            doc.text(`Model: ${model}`, 10, 91);
+            doc.text(`Code: ${model} | Color: ${color}`, 40, 77, { align: "center" });
             
             doc.setFont("helvetica", "bold");
-            doc.text(`Price: $${price}`, 10, 97);
+            doc.text(`Price: Rs. ${price}`, 40, 82, { align: "center" });
+            
+            doc.save(`Saheli_${model}.pdf`);
 
-            // Save PDF
-            doc.save(`Label_${name.replace(/\s+/g, '_')}.pdf`);
-        }, 200);
+            // UI Transition
+            document.getElementById("form-content").style.display = "none";
+            document.getElementById("preview-area").style.display = "block";
+            document.getElementById("refresh-btn").style.display = "block";
+        }, 400);
     }
+
+    function restart() {
+        // Clear inputs
+        ['name', 'model', 'color', 'price'].forEach(id => document.getElementById(id).value = '');
+        
+        // Reset View
+        document.getElementById("form-content").style.display = "block";
+        document.getElementById("preview-area").style.display = "none";
+        document.getElementById("refresh-btn").style.display = "none";
+        document.getElementById("qrcode").innerHTML = "";
+    }
+
+    // Initial Load
+    updateHistoryUI();
 </script>
 
 </body>
