@@ -57,10 +57,10 @@
 
 <script>
     function processLabel() {
-        const name = document.getElementById('p_name').value;
-        const model = document.getElementById('p_model').value;
-        const color = document.getElementById('p_color').value;
-        const price = document.getElementById('p_price').value;
+        const name = document.getElementById('p_name').value.trim();
+        const model = document.getElementById('p_model').value.trim();
+        const color = document.getElementById('p_color').value.trim();
+        const price = document.getElementById('p_price').value.trim();
 
         if (!name || !model || !color || !price) {
             alert("Please fill all fields!");
@@ -69,18 +69,25 @@
 
         const qrDiv = document.getElementById("qrcode-canvas");
         qrDiv.innerHTML = "";
-        // QR Data remains detailed for scanning
-        const qrData = `SAHELI\nItem: ${name}\nCode: ${model}\nColor: ${color}\nPrice: Rs.${price}`;
         
+        // Shortened data string for lower density (bigger blocks)
+        const qrData = `SAHELI\nID:${model}\nNM:${name}\nCL:${color}\nRS:${price}`;
+        
+        // Generate high-readability QR
         new QRCode(qrDiv, {
             text: qrData,
-            width: 160,
-            height: 160
+            width: 200,
+            height: 200,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H // Level H allows 30% damage/blur
         });
 
         setTimeout(() => {
             const { jsPDF } = window.jspdf;
             const canvas = qrDiv.querySelector('canvas');
+            if(!canvas) return;
+            
             const doc = new jsPDF({ unit: "mm", format: [80, 100] });
 
             // 1. BRAND HEADER
@@ -89,23 +96,23 @@
             doc.setTextColor(219, 39, 119);
             doc.text("SAHELI", 40, 15, { align: "center" });
             
-            // 2. QR CODE
+            // 2. QR CODE (Scale nicely for the label)
             doc.addImage(canvas.toDataURL("image/png"), 'PNG', 15, 20, 50, 50);
             
-            // 3. DETAILS BELOW QR (Name, Color, Price Only)
+            // 3. DETAILS BELOW QR
             doc.setTextColor(0, 0, 0);
             doc.setFontSize(12);
             doc.text(name, 40, 78, { align: "center", maxWidth: 70 });
             
             doc.setFontSize(10);
             doc.setFont("helvetica", "normal");
-            doc.text(`Color: ${color}`, 40, 85, { align: "center" });
+            doc.text(`Model: ${model} | Color: ${color}`, 40, 85, { align: "center" });
             
             doc.setFont("helvetica", "bold");
             doc.setFontSize(13);
             doc.text(`Price: Rs. ${price}`, 40, 93, { align: "center" });
 
-            doc.save(`Saheli_${name.replace(/\s+/g, '_')}.pdf`);
+            doc.save(`Saheli_${model}.pdf`);
 
             // UI FLOW
             document.getElementById('form-box').style.display = 'none';
@@ -134,13 +141,10 @@
     }
 
     function resetApp() {
-        // Clear inputs
         document.getElementById('p_name').value = '';
         document.getElementById('p_model').value = '';
         document.getElementById('p_color').value = '';
         document.getElementById('p_price').value = '';
-        
-        // Reset View
         document.getElementById('form-box').style.display = 'block';
         document.getElementById('result-area').style.display = 'none';
     }
